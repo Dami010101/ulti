@@ -7,11 +7,14 @@ const mongoose = require("mongoose")
 
 //importing route---> to be done after done with route
 const userRoute = require('../route/UserRoute')
+const adminRoute = require('../route/AdminRoute')
+
 
 //send request--->to be done after done with route
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use('/api/user', userRoute)
+app.use("/api/admin", adminRoute);
 
 // creating server
 console.log(process.env.ULTMD)

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
-// Define the user schema
-const userSchema = mongoose.Schema({
+// Define the admin schema
+const adminSchema = mongoose.Schema({
     firstName: {
         type: String,
         required: [true, 'Please enter your first name']
@@ -72,6 +72,6 @@ const userSchema = mongoose.Schema({
 });
 
 // Create the user model
-const UserModel = mongoose.model('Users', userSchema);
+const AdminModel = mongoose.model('Admins', adminSchema);
 
-module.exports = UserModel;
+module.exports = AdminModel;
