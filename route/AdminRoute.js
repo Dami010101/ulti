@@ -9,7 +9,13 @@ const {
     viewAllUsers,
     viewOneUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    createProduct,
+    viewOneProduct,
+    viewAllProducts,
+    updateProduct,
+    deleteProduct,
+    upload // Import upload middleware
 } = require("../controller/AdminController");
 
 // Admin routes
@@ -21,9 +27,16 @@ router.get("/users/:id", viewOneUser); // View one user
 router.put("/users/:id", updateUser); // Update user details
 router.delete("/users/:id", deleteUser); // Delete a user
 
-// protected route
+// Product routes
+router.post("/products", upload.single('image'), createProduct); // Create a new product with image upload
+router.get("/products", viewAllProducts); // View all products
+router.get("/products/:id", viewOneProduct); // View one product
+router.put("/products/:id", upload.single('image'), updateProduct); // Update product details with image upload
+router.delete("/products/:id", deleteProduct); // Delete a product
+
+// Protected route
 router.get("/protected", auth, (req, res) => {
-res.send("This is a protected route");
+    res.send("This is a protected route");
 });
 
 module.exports = router;

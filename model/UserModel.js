@@ -1,7 +1,22 @@
 const mongoose = require("mongoose");
 
+/// Function to generate a unique userId
+function generateUniqueUserId() {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letterPart = 'U' + 
+                       letters.charAt(Math.floor(Math.random() * letters.length)) +
+                       letters.charAt(Math.floor(Math.random() * letters.length));
+    const numberPart = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    return letterPart + numberPart;
+}
+
 // Define the user schema
 const userSchema = mongoose.Schema({
+    userId: {
+        type: String,
+        unique: true,
+        default: generateUniqueUserId
+    },
     firstName: {
         type: String,
         required: [true, 'Please enter your first name']
@@ -16,7 +31,7 @@ const userSchema = mongoose.Schema({
         unique: [true, 'Email is already in use'],
         trim: true,
         match: [
-            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
             'Please enter a valid email'
         ]
     },
@@ -66,6 +81,10 @@ const userSchema = mongoose.Schema({
     nationality: {
         type: String,
         required: [false, 'Please select your nationality']
+    },
+    profilePicture: {
+        type: String,
+        default: ''
     }
 }, {
     timestamps: true

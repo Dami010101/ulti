@@ -2,6 +2,10 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const AdminModel = require("../model/AdminModel");
 const UserModel = require("../model/UserModel");
+const ProductModel = require("../model/ProductModel");
+const fs = require('fs');//for profile picture upload
+const path = require('path');
+const multer = require("multer");// for product image upload
 
 // Register a new admin
 const registerAdmin = async (req, res) => {
@@ -102,6 +106,15 @@ const updateAdmin = async (req, res) => {
         nationality
     } = req.body;
 
+    let profilePicture = '';
+
+    // Check if a new profile picture is uploaded
+    if (req.file) {
+        profilePicture = req.file.path;
+        // Optionally, delete the old profile picture file if necessary
+    }
+
+
     // Find and update the admin by ID
     AdminModel.findByIdAndUpdate(
         req.params.id,
@@ -119,7 +132,9 @@ const updateAdmin = async (req, res) => {
             sex,
             maritalStatus,
             phoneNumber,
-            nationality
+            nationality,
+            ...(profilePicture && { profilePicture }) // Update profile picture if a new one is uploaded
+
         },
         {
             new: true,
@@ -164,7 +179,10 @@ const updateUser = async (req, res) => {
         age,
         maritalStatus,
         nationality,
-        address,
+        street,
+        postcode,
+        stateCounty,
+        cityTown,
         profilePicture
     } = req.body;
 
@@ -180,7 +198,10 @@ const updateUser = async (req, res) => {
             age,
             maritalStatus,
             nationality,
-            address,
+            street,
+            postcode,
+            stateCounty,
+            cityTown,
             profilePicture
         },
         {
@@ -205,4 +226,113 @@ const deleteUser = (req, res) => {
     .catch(error => res.status(404).json('error' + error));
 };
 
-module.exports = { registerAdmin, loginAdmin, updateAdmin, viewAllUsers, viewOneUser, updateUser, deleteUser };
+// Set up multer storage and file filter for product upload
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "uploads/"); // Change this to your desired upload folder
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname)); // Append extension
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    // Accept only image files
+    if (file.mimetype.startsWith("image/")) {
+        cb(null, true);
+    } else {
+        cb(new Error("Invalid file type, only images are allowed!"), false);
+    }
+};
+
+const upload = multer({ storage: storage, fileFilter: fileFilter });
+
+// Create a new product
+const createProduct = async (req, res) => {
+    const { name, brand, price, description, category } = req.body;
+    const image = req.file ? req.file.path : null;
+
+    if (!name || !brand || !price || !description || !category || !image) {
+        return res.status(400).json("Please fill in all required fields");
+    }
+
+    try {
+        const newProduct = await ProductModel.create({
+            name,
+            brand,
+            price,
+            description,
+            category,
+            image
+        });
+        res.status(201).json(newProduct);
+    } catch (error) {
+        res.status(500).json(error.message);
+    }
+};
+
+// Update product details
+const updateProduct = async (req, res) => {
+    const { name, brand, price, description, category } = req.body;
+    const image = req.file ? req.file.path : req.body.image; // Use new image if uploaded, else keep the old one
+
+    try {
+        const updatedProduct = await ProductModel.findByIdAndUpdate(
+            req.params.id,
+            { name, brand, price, description, category, image },
+            { new: true, runValidators: true }
+        );
+        if (!updatedProduct) return res.status(404).json("Product not found");
+        res.status(200).json(updatedProduct);
+    } catch (error) {
+        res.status(500).json(error.message);
+    }
+};
+
+// View one product
+const viewOneProduct = async (req, res) => {
+    try {
+        const product = await ProductModel.findById(req.params.id);
+        if (!product) return res.status(404).json("Product not found");
+        res.status(200).json(product);
+    } catch (error) {
+        res.status(500).json(error.message);
+    }
+};
+
+// View all products
+const viewAllProducts = async (req, res) => {
+    try {
+        const products = await ProductModel.find();
+        res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json(error.message);
+    }
+};
+
+// Delete a product
+const deleteProduct = async (req, res) => {
+    try {
+        const deletedProduct = await ProductModel.findByIdAndDelete(req.params.id);
+        if (!deletedProduct) return res.status(404).json("Product not found");
+        res.status(200).json("Product deleted successfully");
+    } catch (error) {
+        res.status(500).json(error.message);
+    }
+};
+
+module.exports = { 
+    registerAdmin, 
+    loginAdmin, 
+    updateAdmin, 
+    viewAllUsers, 
+    viewOneUser, 
+    updateUser, 
+    deleteUser, 
+    createProduct,
+    viewOneProduct,
+    viewAllProducts,
+    updateProduct,
+    deleteProduct,
+    upload // Export upload
+ };

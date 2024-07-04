@@ -1,7 +1,22 @@
 const mongoose = require("mongoose");
 
+/// Function to generate a unique userId
+function generateUniqueAdminId() {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letterPart = 'A' + 
+                       letters.charAt(Math.floor(Math.random() * letters.length)) +
+                       letters.charAt(Math.floor(Math.random() * letters.length));
+    const numberPart = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    return letterPart + numberPart;
+}
+
 // Define the admin schema
 const adminSchema = mongoose.Schema({
+    adminId: {
+        type: String,
+        unique: true,
+        default: generateUniqueAdminId
+    },
     firstName: {
         type: String,
         required: [true, 'Please enter your first name']
@@ -66,6 +81,10 @@ const adminSchema = mongoose.Schema({
     nationality: {
         type: String,
         required: [false, 'Please select your nationality']
+    },
+    profilePicture: {
+        type: String,
+        default: ''
     }
 }, {
     timestamps: true
