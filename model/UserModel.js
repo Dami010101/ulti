@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+
 /// Function to generate a unique userId
 function generateUniqueUserId() {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -9,6 +10,11 @@ function generateUniqueUserId() {
     const numberPart = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
     return letterPart + numberPart;
 }
+// Function to get current date and time in the desired format
+const getCurrentDateTime = () => {
+    const now = new Date();
+    return now.toLocaleString();
+  };
 
 // Define the user schema
 const userSchema = mongoose.Schema({
@@ -82,6 +88,7 @@ const userSchema = mongoose.Schema({
         type: String,
         required: [false, 'Please select your nationality']
     },
+
     profilePicture: {
         type: String,
         default: ''

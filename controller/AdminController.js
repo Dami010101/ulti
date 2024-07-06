@@ -3,9 +3,12 @@ const jwt = require("jsonwebtoken");
 const AdminModel = require("../model/AdminModel");
 const UserModel = require("../model/UserModel");
 const ProductModel = require("../model/ProductModel");
-const fs = require('fs');//for profile picture upload
-const path = require('path');
-const multer = require("multer");// for product image upload
+// const fs = require('fs');//for profile picture upload
+// const path = require('path');
+// const multer = require("multer");// for product image upload
+const OrderModel = require("../model/OrderModel");
+const { fileSizeFormatter } = require("../utility/fileUpload");
+const cloudinary = require('../config/cloudinaryConfig');
 
 // Register a new admin
 const registerAdmin = async (req, res) => {
@@ -227,45 +230,97 @@ const deleteUser = (req, res) => {
 };
 
 // Set up multer storage and file filter for product upload
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "uploads/"); // Change this to your desired upload folder
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname)); // Append extension
-    }
-});
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         cb(null, "uploads/"); // Change this to your desired upload folder
+//     },
+//     filename: function (req, file, cb) {
+//         cb(null, Date.now() + path.extname(file.originalname)); // Append extension
+//     }
+// });
 
-const fileFilter = (req, file, cb) => {
-    // Accept only image files
-    if (file.mimetype.startsWith("image/")) {
-        cb(null, true);
-    } else {
-        cb(new Error("Invalid file type, only images are allowed!"), false);
+// const fileFilter = (req, file, cb) => {
+//     // Accept only image files
+//     if (file.mimetype.startsWith("image/")) {
+//         cb(null, true);
+//     } else {
+//         cb(new Error("Invalid file type, only images are allowed!"), false);
+//     }
+// };
+
+// const upload = multer({ storage: storage, fileFilter: fileFilter });
+
+// Upload image
+const uploadImage = async (req) => {
+    if (req.file) {
+        try {
+            const uploadedFile = await cloudinary.uploader.upload(req.file.path, {
+                folder: "uploads",
+                resource_type: "image",
+            });
+            return {
+                fileName: req.file.originalname,
+                filePath: uploadedFile.secure_url,
+                fileType: req.file.mimetype,
+                fileSize: fileSizeFormatter(req.file.size, 2),
+            };
+        } catch (error) {
+            throw new Error("Image could not be uploaded");
+        }
     }
+    return null;
 };
 
-const upload = multer({ storage: storage, fileFilter: fileFilter });
+// Create a new product
+// const createProduct = async (req, res) => {
+//     const { name, brand, price, description, category } = req.body;
+//     const image = req.file ? req.file.path : null;
+
+//     if (!name || !brand || !price || !description || !category || !image) {
+//         return res.status(400).json("Please fill in all required fields");
+//     }
+
+//     try {
+//         const newProduct = await ProductModel.create({
+//             name,
+//             brand,
+//             price,
+//             description,
+//             category,
+//             image
+//         });
+//         res.status(201).json(newProduct);
+//     } catch (error) {
+//         res.status(500).json(error.message);
+//     }
+// };
 
 // Create a new product
 const createProduct = async (req, res) => {
     const { name, brand, price, description, category } = req.body;
-    const image = req.file ? req.file.path : null;
-
-    if (!name || !brand || !price || !description || !category || !image) {
+    // console.log(req.body);
+    // return;
+    // Validate required fields
+    if (!name || !brand || !price || !description || !category) {
         return res.status(400).json("Please fill in all required fields");
     }
 
     try {
+        const fileData = await uploadImage(req);
+        if (!fileData) {
+            return res.status(400).json("Please upload an image");
+        }
+
         const newProduct = await ProductModel.create({
             name,
             brand,
             price,
             description,
             category,
-            image
+            image: fileData.filePath // Ensure this is assigned correctly
         });
-        res.status(201).json(newProduct);
+
+        res.status(200).json(newProduct);
     } catch (error) {
         res.status(500).json(error.message);
     }
@@ -321,6 +376,39 @@ const deleteProduct = async (req, res) => {
     }
 };
 
+// View all orders
+const viewAllOrders = (req, res) => {
+    OrderModel.find()
+        .then((orders) => {
+            res.status(200).json(orders);
+        })
+        .catch(error => res.status(500).json({ error: error.message }));
+};
+
+// Update payment status
+const updatePaymentStatus = (req, res) => {
+    const { orderId } = req.params;
+    const { paymentStatus } = req.body;
+
+    OrderModel.findByIdAndUpdate(orderId, { paymentStatus }, { new: true })
+        .then((order) => {
+            res.status(200).json(order);
+        })
+        .catch(error => res.status(500).json({ error: error.message }));
+};
+
+// Update delivery status
+const updateDeliveryStatus = (req, res) => {
+    const { orderId } = req.params;
+    const { deliveryStatus } = req.body;
+
+    OrderModel.findByIdAndUpdate(orderId, { deliveryStatus }, { new: true })
+        .then((order) => {
+            res.status(200).json(order);
+        })
+        .catch(error => res.status(500).json({ error: error.message }));
+};
+
 module.exports = { 
     registerAdmin, 
     loginAdmin, 
@@ -334,5 +422,8 @@ module.exports = {
     viewAllProducts,
     updateProduct,
     deleteProduct,
-    upload // Export upload
+    viewAllOrders,
+    updatePaymentStatus, 
+    updateDeliveryStatus,
+    // upload // Export upload
  };

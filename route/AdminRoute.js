@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const auth = require("../middleware/authMiddleware");
+const auth = require("../middleware/AuthMiddleware");
+const { upload } = require('../utility/fileUpload');
+
 
 const {
     registerAdmin,
@@ -15,7 +17,10 @@ const {
     viewAllProducts,
     updateProduct,
     deleteProduct,
-    upload // Import upload middleware
+    viewAllOrders, 
+    updatePaymentStatus, 
+    updateDeliveryStatus,
+    // upload // Import upload middleware
 } = require("../controller/AdminController");
 
 // Admin routes
@@ -33,6 +38,11 @@ router.get("/products", viewAllProducts); // View all products
 router.get("/products/:id", viewOneProduct); // View one product
 router.put("/products/:id", upload.single('image'), updateProduct); // Update product details with image upload
 router.delete("/products/:id", deleteProduct); // Delete a product
+
+// Admin routes for managing orders
+router.get("/orders", viewAllOrders); // View all orders
+router.put("/orders/payment/:orderId", updatePaymentStatus); // Update payment status
+router.put("/orders/delivery/:orderId", updateDeliveryStatus); // Update delivery status
 
 // Protected route
 router.get("/protected", auth, (req, res) => {

@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const UserModel = require("../model/UserModel");
 const fs = require('fs');
 const path = require('path');
+const OrderModel = require("../model/OrderModel");
+
 
 // Register a new user
 const registerUser = async (req, res) => {
@@ -95,21 +97,15 @@ const updateUser = async (req, res) => {
         nationality
     } = req.body;
 
-    let profilePicture = '';
-
-    // Check if a new profile picture is uploaded
-    if (req.file) {
-        profilePicture = req.file.path;
-        // Optionally, delete the old profile picture file if necessary
+    if (!firstName || !lastName || !email || !street || !postcode || !country || !stateCounty || !cityTown || !age || !sex || !maritalStatus || !phoneNumber || !nationality) {
+        return res.status(400).json("Please fill in all required fields");
     }
 
-    const updatedUser = await UserModel.findByIdAndUpdate(
-        req.params.id,
-        {
+    try {
+        const updateFields = {
             firstName,
             lastName,
             email,
-            password: await bcrypt.hash(password, 10),
             street,
             postcode,
             country,
@@ -119,21 +115,39 @@ const updateUser = async (req, res) => {
             sex,
             maritalStatus,
             phoneNumber,
-            nationality,
-            ...(profilePicture && { profilePicture }) // Update profile picture if a new one is uploaded
-        },
-        {
-            new: true,
-            runValidators: true
+            nationality
+        };
+
+        if (password) {
+            if (password.length < 6) {
+                return res.status(400).json("Password must be at least 6 characters");
+            }
+            updateFields.password = await bcrypt.hash(password, 10);
         }
-    );
 
-    if (!updatedUser) {
-        return res.status(404).json("User not found");
+        if (req.file) {
+            updateFields.profilePicture = req.file.path;
+        }
+
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            req.params.id,
+            updateFields,
+            {
+                new: true,
+                runValidators: true
+            }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json("User not found");
+        }
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-
-    res.status(200).json(updatedUser);
 };
+
 
 // View all users
 const viewAllUser = (req, res) => {
@@ -144,4 +158,42 @@ const viewAllUser = (req, res) => {
         .catch(error => res.status(401).json('error' + error))
 }
 
-module.exports = { registerUser, loginUser, updateUser, viewAllUser };
+// Place a new order
+const placeOrder = async (req, res) => {
+    const {
+        firstName,
+        lastName,
+        email,
+        street,
+        postcode,
+        country,
+        stateCounty,
+        cityTown,
+        phoneNumber,
+        cartPageUrl,
+        totalAmount
+    } = req.body;
+
+    try {
+        const newOrder = new OrderModel({
+            firstName,
+            lastName,
+            email,
+            street,
+            postcode,
+            country,
+            stateCounty,
+            cityTown,
+            phoneNumber,
+            totalAmount,
+            cartPageUrl,
+        });
+
+        await newOrder.save();
+        res.status(200).json(newOrder);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { registerUser, loginUser, updateUser, viewAllUser, placeOrder};

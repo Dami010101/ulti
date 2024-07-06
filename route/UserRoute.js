@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
-const { registerUser, loginUser, updateUser, viewAllUser } = require("../controller/UserController");
-const auth = require("../middleware/authMiddleware");
+const { registerUser, loginUser, updateUser, viewAllUser, placeOrder } = require("../controller/UserController");
+const auth = require("../middleware/AuthMiddleware");
 
 // Set up Multer for file uploads
 const storage = multer.diskStorage({
@@ -21,6 +21,10 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.put("/update/:id", upload.single('profilePicture'), updateUser); // Add upload middleware for update route
 router.get("/viewAllUser", viewAllUser);
+
+// New route for placing an order
+router.post("/order", placeOrder);
+// router.post("/order", auth, placeOrder);
 
 // protected route
 router.get("/protected", auth, (req, res) => {
