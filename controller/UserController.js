@@ -91,13 +91,17 @@ const updateUser = async (req, res) => {
         stateCounty,
         cityTown,
         age,
+        pob,
         sex,
         maritalStatus,
         phoneNumber,
         nationality
     } = req.body;
 
-    if (!firstName || !lastName || !email || !street || !postcode || !country || !stateCounty || !cityTown || !age || !sex || !maritalStatus || !phoneNumber || !nationality) {
+    if (
+        !firstName || !lastName || !email || !street || !postcode || !country || !stateCounty ||
+         !cityTown || !age || !sex || !maritalStatus || !phoneNumber || !nationality || !pob
+    ) {
         return res.status(400).json("Please fill in all required fields");
     }
 
@@ -109,14 +113,18 @@ const updateUser = async (req, res) => {
             street,
             postcode,
             country,
+            pob,
             stateCounty,
             cityTown,
             age,
             sex,
             maritalStatus,
             phoneNumber,
-            nationality
+            nationality,
+            ...(profilePicture && { profilePicture }) // Update profile picture if a new one is uploaded
+
         };
+
 
         if (password) {
             if (password.length < 6) {
@@ -125,8 +133,23 @@ const updateUser = async (req, res) => {
             updateFields.password = await bcrypt.hash(password, 10);
         }
 
+        // if (req.file) {
+        //     updateFields.profilePicture = req.file.path;
+        // }
+        let profilePicture = '';
+
+
         if (req.file) {
-            updateFields.profilePicture = req.file.path;
+            try {
+                const uploadProfilePicture = await cloudinary.uploader.upload(req.file.path, {
+                    folder: "profilePicture",
+                    resource_type: "image",
+                });
+                profilePicture = uploadProfilePicture.secure_url;
+          
+            } catch (error) {
+                throw new Error("Image could not be uploaded");
+            }
         }
 
         const updatedUser = await UserModel.findByIdAndUpdate(

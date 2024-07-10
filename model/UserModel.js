@@ -66,6 +66,10 @@ const userSchema = mongoose.Schema({
         type: String,
         required: [true, 'Please enter your city/town']
     },
+    pob: {
+        type: String,
+        required: [false, 'Please enter your pob']
+    },
     age: {
         type: Date,
         required: [true, 'Please enter your age']

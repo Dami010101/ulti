@@ -111,10 +111,23 @@ const updateAdmin = async (req, res) => {
 
     let profilePicture = '';
 
-    // Check if a new profile picture is uploaded
+    // // Check if a new profile picture is uploaded
+    // if (req.file) {
+    //     profilePicture = req.file.path;
+    //     // Optionally, delete the old profile picture file if necessary
+    // }
+
     if (req.file) {
-        profilePicture = req.file.path;
-        // Optionally, delete the old profile picture file if necessary
+        try {
+            const uploadProfilePicture = await cloudinary.uploader.upload(req.file.path, {
+                folder: "profilePicture",
+                resource_type: "image",
+            });
+            profilePicture = uploadProfilePicture.secure_url;
+      
+        } catch (error) {
+            throw new Error("Image could not be uploaded");
+        }
     }
 
 

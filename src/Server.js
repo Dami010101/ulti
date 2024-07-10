@@ -18,6 +18,7 @@ const adminRoute = require('../route/AdminRoute')
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+app.use('/profilePicture', express.static(path.join(__dirname, 'profilePicture')))
 app.use('/api/user', userRoute)
 app.use("/api/admin", adminRoute);
 
