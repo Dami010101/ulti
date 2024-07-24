@@ -4,7 +4,7 @@ const UserModel = require("../model/UserModel");
 const fs = require('fs');
 const path = require('path');
 const OrderModel = require("../model/OrderModel");
-
+const cloudinary = require('cloudinary').v2; // Ensure you have cloudinary setup
 
 // Register a new user
 const registerUser = async (req, res) => {
@@ -24,7 +24,8 @@ const registerUser = async (req, res) => {
         phoneNumber,
         nationality
     } = req.body;
-
+    // console.log(req.body);
+    // return;
     if (!firstName) return res.status(400).json("Please enter your first name");
     if (!lastName) return res.status(400).json("Please enter your last name");
     if (!email) return res.status(400).json("Please enter your email address");
@@ -80,32 +81,52 @@ const loginUser = async (req, res) => {
 
 // Update user
 const updateUser = async (req, res) => {
-    const {
-        firstName,
-        lastName,
-        email,
-        password,
-        street,
-        postcode,
-        country,
-        stateCounty,
-        cityTown,
-        age,
-        pob,
-        sex,
-        maritalStatus,
-        phoneNumber,
-        nationality
-    } = req.body;
-
-    if (
-        !firstName || !lastName || !email || !street || !postcode || !country || !stateCounty ||
-         !cityTown || !age || !sex || !maritalStatus || !phoneNumber || !nationality || !pob
-    ) {
-        return res.status(400).json("Please fill in all required fields");
-    }
-
     try {
+        const {
+            firstName,
+            lastName,
+            email,
+            password,
+            street,
+            postcode,
+            country,
+            stateCounty,
+            cityTown,
+            age,
+            pob,
+            sex,
+            maritalStatus,
+            phoneNumber,
+            nationality
+        } = req.body;
+
+        if (
+            !firstName || !lastName || !email || !street || !postcode || !country || !stateCounty ||
+            !cityTown || !sex || !phoneNumber
+        ) {
+            return res.status(400).json("Please fill in all required fields");
+        }
+        let profilePicture = '';
+
+        // Log for debugging
+        console.log('Request file:', req.file);
+
+        if (req.file) {
+            try {
+                const uploadProfilePicture = await cloudinary.uploader.upload(req.file.path, {
+                    folder: "profilePicture",
+                    resource_type: "image",
+                });
+                profilePicture = uploadProfilePicture.secure_url;
+                console.log('Profile picture uploaded:', profilePicture);
+            } catch (error) {
+                console.error('Image upload error:', error);
+                throw new Error("Image could not be uploaded");
+            }
+        }
+
+        const hashpassword = await bcrypt.hash(password, 10);
+
         const updateFields = {
             firstName,
             lastName,
@@ -121,36 +142,9 @@ const updateUser = async (req, res) => {
             maritalStatus,
             phoneNumber,
             nationality,
+            password: hashpassword,
             ...(profilePicture && { profilePicture }) // Update profile picture if a new one is uploaded
-
         };
-
-
-        if (password) {
-            if (password.length < 6) {
-                return res.status(400).json("Password must be at least 6 characters");
-            }
-            updateFields.password = await bcrypt.hash(password, 10);
-        }
-
-        // if (req.file) {
-        //     updateFields.profilePicture = req.file.path;
-        // }
-        let profilePicture = '';
-
-
-        if (req.file) {
-            try {
-                const uploadProfilePicture = await cloudinary.uploader.upload(req.file.path, {
-                    folder: "profilePicture",
-                    resource_type: "image",
-                });
-                profilePicture = uploadProfilePicture.secure_url;
-          
-            } catch (error) {
-                throw new Error("Image could not be uploaded");
-            }
-        }
 
         const updatedUser = await UserModel.findByIdAndUpdate(
             req.params.id,
@@ -167,19 +161,23 @@ const updateUser = async (req, res) => {
 
         res.status(200).json(updatedUser);
     } catch (error) {
+        console.error('Update user error:', error);
         res.status(500).json({ error: error.message });
     }
 };
 
-
 // View all users
 const viewAllUser = (req, res) => {
     UserModel.find()
-        .then((user) => {
-            res.status(200).json(user);
+        .then((users) => {
+            console.log('Users found:', users);
+            res.status(200).json(users);
         })
-        .catch(error => res.status(401).json('error' + error))
-}
+        .catch(error => {
+            console.error('Error fetching users:', error);
+            res.status(401).json('error' + error)
+        });
+};
 
 // Place a new order
 const placeOrder = async (req, res) => {
@@ -215,8 +213,9 @@ const placeOrder = async (req, res) => {
         await newOrder.save();
         res.status(200).json(newOrder);
     } catch (error) {
+        console.error('Place order error:', error);
         res.status(500).json({ error: error.message });
     }
 };
 
-module.exports = { registerUser, loginUser, updateUser, viewAllUser, placeOrder};
+module.exports = { registerUser, loginUser, updateUser, viewAllUser, placeOrder };

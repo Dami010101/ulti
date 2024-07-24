@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const SuperAdminModel = require("../model/SuperAdminModel")
 const AdminModel = require("../model/AdminModel");
 const UserModel = require("../model/UserModel");
 const ProductModel = require("../model/ProductModel");
@@ -10,8 +11,8 @@ const OrderModel = require("../model/OrderModel");
 const { fileSizeFormatter } = require("../utility/fileUpload");
 const cloudinary = require('cloudinary').v2; // Ensure you have cloudinary setup
 
-// Register a new admin
-const registerAdmin = async (req, res) => {
+// Register a new superAdmin
+const registerSuperAdmin = async (req, res) => {
     const {
         firstName,
         lastName,
@@ -28,7 +29,6 @@ const registerAdmin = async (req, res) => {
         phoneNumber,
         nationality
     } = req.body;
- 
 
     // Validate required fields
     if (!firstName) return res.status(400).json("Please enter your first name");
@@ -38,14 +38,14 @@ const registerAdmin = async (req, res) => {
     if (password.length < 6) return res.status(400).json("Password must be at least 6 characters");
 
     // Check if the email is already in use
-    const uniqueEmail = await AdminModel.findOne({ email });
+    const uniqueEmail = await SuperAdminModel.findOne({ email });
     if (uniqueEmail) return res.status(400).json("Email already in use");
 
     // Hash the password
     const hashPassword = await bcrypt.hash(password, 10);
 
-    // Create a new admin
-    const newAdmin = await AdminModel.create({
+    // Create a new superAdmin
+    const newSuperAdmin = await SuperAdminModel.create({
         firstName,
         lastName,
         email,
@@ -62,111 +62,38 @@ const registerAdmin = async (req, res) => {
         nationality
     });
 
-    // Send the new admin data in the response
-    res.status(200).json(newAdmin);
+    // Send the new superAdmin data in the response
+    res.status(200).json(newSuperAdmin);
 };
 
-// Login a admin
-const loginAdmin = async (req, res) => {
+// Login a superAdmin
+const loginSuperAdmin = async (req, res) => {
     const { email, password } = req.body;
 
     // Validate required fields
     if (!email) return res.status(400).json("Please enter your email address");
     if (!password) return res.status(400).json("Please enter your password");
 
-    // Check if the admin exists
-    const admin = await AdminModel.findOne({ email });
-    if (!admin) return res.status(400).json("Invalid email or password");
+    // Check if the superAdmin exists
+    const superAdmin = await SuperAdminModel.findOne({ email });
+    if (!superAdmin) return res.status(400).json("Invalid email or password");
 
     // Compare the password with the hashed password
-    const isMatch = await bcrypt.compare(password, admin.password);
+    const isMatch = await bcrypt.compare(password, superAdmin.password);
     if (!isMatch) return res.status(400).json("Invalid email or password");
 
     // Create a JWT token
-    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: superAdmin._id }, process.env.JWT_SECRET, {
         expiresIn: "1h"
     });
 
-    // Send the token and admin data in the response
-    res.status(200).json({ token, admin });
+    // Send the token and superAdmin data in the response
+    res.status(200).json({ token, superAdmin });
 };
 
-// Update admin details
-// const updateAdmin = async (req, res) => {
-//     const {
-//         firstName,
-//         lastName,
-//         email,
-//         password,
-//         street,
-//         postcode,
-//         country,
-//         stateCounty,
-//         cityTown,
-//         age,
-//         sex,
-//         maritalStatus,
-//         phoneNumber,
-//         nationality
-//     } = req.body;
-
-//     let profilePicture = '';
-
-//     // // Check if a new profile picture is uploaded
-//     // if (req.file) {
-//     //     profilePicture = req.file.path;
-//     //     // Optionally, delete the old profile picture file if necessary
-//     // }
-
-//     if (req.file) {
-//         try {
-//             const uploadProfilePicture = await cloudinary.uploader.upload(req.file.path, {
-//                 folder: "profilePicture",
-//                 resource_type: "image",
-//             });
-//             profilePicture = uploadProfilePicture.secure_url;
-      
-//         } catch (error) {
-//             throw new Error("Image could not be uploaded");
-//         }
-//     }
 
 
-//     // Find and update the admin by ID
-//     AdminModel.findByIdAndUpdate(
-//         req.params.id,
-//         {
-//             firstName,
-//             lastName,
-//             email,
-//             password: await bcrypt.hash(password, 10),
-//             street,
-//             postcode,
-//             country,
-//             stateCounty,
-//             cityTown,
-//             age,
-//             sex,
-//             maritalStatus,
-//             phoneNumber,
-//             nationality,
-//             ...(profilePicture && { profilePicture }) // Update profile picture if a new one is uploaded
-
-//         },
-//         {
-//             new: true,
-//             runValidators: true
-//         }
-//     )
-//     .then(() => {
-//         res.status(200).json("Admin account updated successfully");
-//     })
-//     .catch((error) => {
-//         res.status(404).json(error);
-//     });
-// };
-
-const updateAdmin = async (req, res) => {
+const updateSuperAdmin = async (req, res) => {
     try {
         const {
             firstName,
@@ -184,7 +111,6 @@ const updateAdmin = async (req, res) => {
             phoneNumber,
             nationality
         } = req.body;
-     
 
         if (
             !firstName || !lastName || !email || !street || !postcode || !country || !stateCounty ||
@@ -231,7 +157,7 @@ const updateAdmin = async (req, res) => {
             ...(profilePicture && { profilePicture }) // Update profile picture if a new one is uploaded
         };
 
-        const updatedAdmin = await AdminModel.findByIdAndUpdate(
+        const updatedSuperAdmin = await SuperAdminModel.findByIdAndUpdate(
             req.params.id,
             updateFields,
             {
@@ -240,13 +166,13 @@ const updateAdmin = async (req, res) => {
             }
         );
 
-        if (!updatedAdmin) {
-            return res.status(404).json("Admin not found");
+        if (!updatedSuperAdmin) {
+            return res.status(404).json("SuperAdmin not found");
         }
 
-        res.status(200).json(updatedAdmin);
+        res.status(200).json(updatedSuperAdmin);
     } catch (error) {
-        console.error('Update admin error:', error);
+        console.error('Update superAdmin error:', error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -328,26 +254,85 @@ const deleteUser = (req, res) => {
     .catch(error => res.status(404).json('error' + error));
 };
 
-// Set up multer storage and file filter for product upload
-// const storage = multer.diskStorage({
-//     destination: function (req, file, cb) {
-//         cb(null, "uploads/"); // Change this to your desired upload folder
-//     },
-//     filename: function (req, file, cb) {
-//         cb(null, Date.now() + path.extname(file.originalname)); // Append extension
-//     }
-// });
 
-// const fileFilter = (req, file, cb) => {
-//     // Accept only image files
-//     if (file.mimetype.startsWith("image/")) {
-//         cb(null, true);
-//     } else {
-//         cb(new Error("Invalid file type, only images are allowed!"), false);
-//     }
-// };
+// View all admins
+const viewAllAdmins = (req, res) => {
+    AdminModel.find()
+    .then((admins) => {
+        res.status(200).json(admins);
+    })
+    .catch(error => res.status(401).json('error' + error));
+};
 
-// const upload = multer({ storage: storage, fileFilter: fileFilter });
+// View one admin
+const viewOneAdmin = (req, res) => {
+    AdminModel.findById(req.params.id)
+    .then((admin) => {
+        if (!admin) return res.status(404).json("Admin not found");
+        res.status(200).json(admin);
+    })
+    .catch(error => res.status(401).json('error' + error));
+};
+
+// Update admin details
+const updateAdmin = async (req, res) => {
+    const {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        sex,
+        age,
+        maritalStatus,
+        nationality,
+        street,
+        postcode,
+        stateCounty,
+        cityTown,
+        profilePicture
+    } = req.body;
+
+    // Find and update the admin by ID
+    AdminModel.findByIdAndUpdate(
+        req.params.id,
+        {
+            firstName,
+            lastName,
+            email,
+            phoneNumber,
+            sex,
+            age,
+            maritalStatus,
+            nationality,
+            street,
+            postcode,
+            stateCounty,
+            cityTown,
+            profilePicture
+        },
+        {
+            new: true,
+            runValidators: true
+        }
+    )
+    .then(() => {
+        res.status(200).json("Admin account updated successfully");
+    })
+    .catch((error) => {
+        res.status(404).json(error);
+    });
+};
+
+// Delete an admin
+const deleteAdmin = (req, res) => {
+    AdminModel.findByIdAndDelete(req.params.id)
+    .then(() => {
+        res.status(200).json("Admin deleted successfully");
+    })
+    .catch(error => res.status(404).json('error' + error));
+};
+
+
 
 // Upload image
 const uploadImage = async (req) => {
@@ -370,29 +355,7 @@ const uploadImage = async (req) => {
     return null;
 };
 
-// Create a new product
-// const createProduct = async (req, res) => {
-//     const { name, brand, price, description, category } = req.body;
-//     const image = req.file ? req.file.path : null;
 
-//     if (!name || !brand || !price || !description || !category || !image) {
-//         return res.status(400).json("Please fill in all required fields");
-//     }
-
-//     try {
-//         const newProduct = await ProductModel.create({
-//             name,
-//             brand,
-//             price,
-//             description,
-//             category,
-//             image
-//         });
-//         res.status(201).json(newProduct);
-//     } catch (error) {
-//         res.status(500).json(error.message);
-//     }
-// };
 
 // Create a new product
 const createProduct = async (req, res) => {
@@ -531,13 +494,17 @@ const searchEngine = async (req, res)=>{
 
 
 module.exports = { 
-    registerAdmin, 
-    loginAdmin, 
-    updateAdmin, 
+    registerSuperAdmin, 
+    loginSuperAdmin, 
+    updateSuperAdmin, 
     viewAllUsers, 
     viewOneUser, 
     updateUser, 
     deleteUser, 
+    viewAllAdmins, 
+    viewOneAdmin, 
+    updateAdmin, 
+    deleteAdmin, 
     createProduct,
     viewOneProduct,
     viewAllProducts,
@@ -547,5 +514,4 @@ module.exports = {
     updatePaymentStatus, 
     updateDeliveryStatus,
     searchEngine
-    // upload // Export upload
  };

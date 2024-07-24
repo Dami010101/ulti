@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-/// Function to generate a unique userId
+/// Function to generate a unique adminId
 function generateUniqueAdminId() {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const letterPart = 'A' + 

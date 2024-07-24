@@ -12,6 +12,7 @@ const path = require('path')
 //importing route---> to be done after done with route
 const userRoute = require('../route/UserRoute')
 const adminRoute = require('../route/AdminRoute')
+const superAdminRoute = require('../route/SuperAdminRoute')
 
 
 //send request--->to be done after done with route
@@ -21,6 +22,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 app.use('/profilePicture', express.static(path.join(__dirname, 'profilePicture')))
 app.use('/api/user', userRoute)
 app.use("/api/admin", adminRoute);
+app.use("/api/superAdmin", superAdminRoute);
 
 // creating server
 console.log(process.env.ULTMD)
