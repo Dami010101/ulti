@@ -2,8 +2,10 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
-const { registerUser, loginUser, updateUser, viewAllUser, placeOrder } = require("../controller/UserController");
+const { registerUser, loginUser, updateUser, viewAllUser, placeOrder, changePassword, 
+    resetPassword, forgotPassword, emailVerification } = require("../controller/UserController");
 const auth = require("../middleware/AuthMiddleware");
+
 
 // Set up Multer for file uploads
 const storage = multer.diskStorage({
@@ -25,6 +27,14 @@ router.get("/viewAllUser", viewAllUser);
 // New route for placing an order
 router.post("/order", placeOrder);
 // router.post("/order", auth, placeOrder);
+
+//password manager
+router.patch('/changepassword', changePassword);
+router.post('/forgotpassword', forgotPassword)
+router.put('/resetpassword/:resetToken', resetPassword)
+
+//email verification
+router.post('/verify-email', emailVerification)
 
 // protected route
 router.get("/protected", auth, (req, res) => {

@@ -92,6 +92,10 @@ const userSchema = mongoose.Schema({
         type: String,
         required: [false, 'Please select your nationality']
     },
+    isVerified: {
+        type: Boolean,
+        required: false
+    },
 
     profilePicture: {
         type: String,

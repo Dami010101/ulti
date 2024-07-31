@@ -7,10 +7,12 @@ const {
     registerSuperAdmin,
     loginSuperAdmin,
     updateSuperAdmin,
+    registerUser,
     viewAllUsers,
     viewOneUser,
     updateUser,
     deleteUser,
+    registerAdmin,
     viewAllAdmins,
     viewOneAdmin,
     updateAdmin,
@@ -32,12 +34,14 @@ router.post("/login", loginSuperAdmin); // Login super admin
 router.put("/update/:id", updateSuperAdmin); // Update super admin details
 
 // User routes
+router.post("/register/user", registerUser);
 router.get("/users", viewAllUsers); // View all users
 router.get("/users/:id", viewOneUser); // View one user
 router.put("/users/:id", updateUser); // Update user details
 router.delete("/users/:id", deleteUser); // Delete a user
 
 // Admin routes
+router.post("/register/admin", registerAdmin); // Register a new admin
 router.get("/admins", viewAllAdmins); // View all admins
 router.get("/admins/:id", viewOneAdmin); // View one admin
 router.put("/admins/:id", updateAdmin); // Update admin details

@@ -8,6 +8,7 @@ const {
     registerAdmin,
     loginAdmin,
     updateAdmin,
+    registerUser,
     viewAllUsers,
     viewOneUser,
     updateUser,
@@ -28,6 +29,9 @@ const {
 router.post("/register", registerAdmin); // Register a new admin
 router.post("/login", loginAdmin); // Login admin
 router.put("/update/:id", upload.single('profilePicture'), updateAdmin); // Update admin details
+
+//managing users
+router.post("/register/user", registerUser);
 router.get("/users", viewAllUsers); // View all users
 router.get("/users/:id", viewOneUser); // View one user
 router.put("/users/:id", updateUser); // Update user details
@@ -40,7 +44,7 @@ router.get("/products/:id", viewOneProduct); // View one product
 router.put("/products/:id", upload.single('image'), updateProduct); // Update product details with image upload
 router.delete("/products/:id", deleteProduct); // Delete a product
 
-// Admin routes for managing orders
+// managing orders
 router.get("/orders", viewAllOrders); // View all orders
 router.put("/orders/payment/:orderId", updatePaymentStatus); // Update payment status
 router.put("/orders/delivery/:orderId", updateDeliveryStatus); // Update delivery status

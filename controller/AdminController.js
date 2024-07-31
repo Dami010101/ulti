@@ -251,6 +251,59 @@ const updateAdmin = async (req, res) => {
     }
 };
 
+// Register a new user
+const registerUser = async (req, res) => {
+    const {
+        firstName,
+        lastName,
+        email,
+        password,
+        street,
+        postcode,
+        country,
+        stateCounty,
+        cityTown,
+        age,
+        sex,
+        maritalStatus,
+        phoneNumber,
+        nationality
+    } = req.body;
+    // console.log(req.body);
+    // return;
+    if (!firstName) return res.status(400).json("Please enter your first name");
+    if (!lastName) return res.status(400).json("Please enter your last name");
+    if (!email) return res.status(400).json("Please enter your email address");
+    if (!password) return res.status(400).json("Please enter your password");
+    if (password.length < 6) return res.status(400).json("Password must be at least 6 characters");
+
+    const uniqueEmail = await UserModel.findOne({ email });
+    if (uniqueEmail) return res.status(400).json("Email already in use");
+
+    const hashPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new UserModel({
+        firstName,
+        lastName,
+        email,
+        password: hashPassword,
+        street,
+        postcode,
+        country,
+        stateCounty,
+        cityTown,
+        age,
+        sex,
+        maritalStatus,
+        phoneNumber,
+        nationality
+    });
+
+    await newUser.save();
+
+    res.status(200).json(newUser);
+};
+
 // View all users
 const viewAllUsers = (req, res) => {
     UserModel.find()
@@ -508,6 +561,7 @@ const updateDeliveryStatus = (req, res) => {
         .catch(error => res.status(500).json({ error: error.message }));
 };
 
+
     //search engine
 const searchEngine = async (req, res)=>{
   const { query } = req.query;
@@ -533,7 +587,8 @@ const searchEngine = async (req, res)=>{
 module.exports = { 
     registerAdmin, 
     loginAdmin, 
-    updateAdmin, 
+    updateAdmin,
+    registerUser, 
     viewAllUsers, 
     viewOneUser, 
     updateUser, 
