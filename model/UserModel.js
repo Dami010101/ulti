@@ -96,6 +96,9 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         required: false
     },
+    verificationToken: {
+        type: String,
+    },
 
     profilePicture: {
         type: String,
