@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const { registerUser, loginUser, updateUser, viewAllUser, placeOrder, changePassword, 
-    resetPassword, forgotPassword, emailVerification } = require("../controller/UserController");
+    resetPassword, forgotPassword, verifyOtp,resendVerificationOtp } = require("../controller/UserController");
 const auth = require("../middleware/AuthMiddleware");
 
 
@@ -34,7 +34,9 @@ router.post('/forgotpassword', forgotPassword)
 router.put('/resetpassword/:resetToken', resetPassword)
 
 //email verification
-router.post('/verify-email', emailVerification)
+//email verification
+router.post('/verifyotp',verifyOtp)
+router.post('/resendverifyotp',resendVerificationOtp)
 
 // protected route
 router.get("/protected", auth, (req, res) => {
