@@ -166,26 +166,34 @@ const resendVerificationOtp = async (req, res) => {  // Corrected function name 
 
 // Login a user
 const loginUser = async (req, res) => {
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
 
-    if (!email) return res.status(400).json("Please enter your email address");
-    if (!password) return res.status(400).json("Please enter your password");
+        // Validate input
+        if (!email) return res.status(400).json({ message: "Please enter your email address" });
+        if (!password) return res.status(400).json({ message: "Please enter your password" });
 
-    const user = await UserModel.findOne({ email });
-    if (!user) return res.status(400).json("Invalid email or password");
+        // Check if the user exists
+        const user = await UserModel.findOne({ email });
+        if (!user) return res.status(400).json({ message: "Invalid email or password" });
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json("Invalid email or password");
+        // Check if the password is correct
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
 
-    if (!user.isVerified) {
-        return res.status(400).send({ error: 'Email not verified. Please check your email.' });
+        // Ensure the user is verified before allowing login
+        if (!user.isVerified) {
+            return res.status(400).json({ message: 'Email not verified. Please check your email for the verification OTP.' });
+        }
+
+        // Generate JWT token if verification passed
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+        // Send the token and user information
+        res.status(200).json({ token, user });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "1h"
-    });
-
-    res.status(200).json({ token, user });
 };
 
 // Update user
