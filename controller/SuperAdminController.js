@@ -10,61 +10,172 @@ const path = require('path');
 const OrderModel = require("../model/OrderModel");
 const { fileSizeFormatter } = require("../utility/fileUpload");
 const cloudinary = require('cloudinary').v2; // Ensure you have cloudinary setup
+const superAdminVerify = require("../model/superAdminVerification");
+const nodemailer = require('nodemailer');
+
+
+// Nodemailer configuration
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: process.env.EMAIL_HOST,
+    auth: {
+        user: process.env.EMAIL_SECRET,
+        pass: process.env.PASS_SECRET
+    },
+    tls: {
+        rejectUnauthorized: false
+    }
+});
+
+// testing
+transporter.verify((error, success) => {
+    if (error) {
+        console.log(error);
+    } else {
+        console.log('Ready for message');
+        console.log(success);
+    }
+});
+
 
 // Register a new superAdmin
 const registerSuperAdmin = async (req, res) => {
-    const {
-        firstName,
-        lastName,
-        email,
-        password,
-        street,
-        postcode,
-        country,
-        stateCounty,
-        cityTown,
-        age,
-        sex,
-        maritalStatus,
-        phoneNumber,
-        nationality
-    } = req.body;
+    try {
+        const {
+            firstName,
+            lastName,
+            email,
+            password,
+            street,
+            postcode,
+            country,
+            stateCounty,
+            cityTown,
+            age,
+            sex,
+            maritalStatus,
+            phoneNumber,
+            nationality
+        } = req.body;
 
-    // Validate required fields
-    if (!firstName) return res.status(400).json("Please enter your first name");
-    if (!lastName) return res.status(400).json("Please enter your last name");
-    if (!email) return res.status(400).json("Please enter your email address");
-    if (!password) return res.status(400).json("Please enter your password");
-    if (password.length < 6) return res.status(400).json("Password must be at least 6 characters");
+        // Validate required fields
+        if (!firstName) return res.status(400).json("Please enter your first name");
+        if (!lastName) return res.status(400).json("Please enter your last name");
+        if (!email) return res.status(400).json("Please enter your email address");
+        if (!password) return res.status(400).json("Please enter your password");
+        if (password.length < 6) return res.status(400).json("Password must be at least 6 characters");
 
-    // Check if the email is already in use
-    const uniqueEmail = await SuperAdminModel.findOne({ email });
-    if (uniqueEmail) return res.status(400).json("Email already in use");
+        // Check if the email is already in use
+        const uniqueEmail = await SuperAdminModel.findOne({ email });
+        if (uniqueEmail) return res.status(400).json("Email already in use");
 
-    // Hash the password
-    const hashPassword = await bcrypt.hash(password, 10);
+        // Hash the password
+        const hashPassword = await bcrypt.hash(password, 10);
 
-    // Create a new superAdmin
-    const newSuperAdmin = await SuperAdminModel.create({
-        firstName,
-        lastName,
-        email,
-        password: hashPassword,
-        street,
-        postcode,
-        country,
-        stateCounty,
-        cityTown,
-        age,
-        sex,
-        maritalStatus,
-        phoneNumber,
-        nationality
-    });
+        // Create a new superAdmin
+        const newSuperAdmin = new SuperAdminModel({
+            firstName,
+            lastName,
+            email,
+            password: hashPassword,
+            street,
+            postcode,
+            country,
+            stateCounty,
+            cityTown,
+            age,
+            sex,
+            maritalStatus,
+            phoneNumber,
+            nationality,
+            isVerified: false
+        });
 
-    // Send the new superAdmin data in the response
-    res.status(200).json(newSuperAdmin);
+        // Save the new superAdmin to the database
+        const savedSuperAdmin = await newSuperAdmin.save();
+
+        // Account verification
+        await sendEmailVerification(savedSuperAdmin, res);
+
+        // Send the new superAdmin data in the response
+        res.status(200).json(savedSuperAdmin);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
+
+const sendEmailVerification = async ({ _id, email }, res) => {
+    try {
+        const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
+        const mailOptions = {
+            from: process.env.EMAIL_SECRET,
+            to: email,
+            subject: 'Verify your email',
+            html: `<p>Use the OTP <b>${otp}</b> in the app to verify your email address and complete your registration. <b>Expires in 6 hours</b>.</p>`
+        };
+        const saltRounds = 10;
+        const hashedOTP = await bcrypt.hash(otp, saltRounds);
+        const newVerify = new superAdminVerify({
+            superAdminId: _id,
+            otp: hashedOTP,
+            createdAt: Date.now(),
+            expiresAt: Date.now() + 3600000 * 6 // 6 hours
+        });
+
+        await newVerify.save();
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ message: 'Verification OTP email sent', data: { superAdminId: _id, email } });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const verifyOtp = async (req, res) => {  // Corrected function name and arguments order
+    try {
+        const { superAdminId, otp } = req.body;
+        if (!superAdminId || !otp) {
+            throw new Error('Empty OTP details are not allowed');
+        }
+
+        const otpVerifyRecord = await superAdminVerify.findOne({ superAdminId });
+        if (!otpVerifyRecord) {
+            throw new Error('Account record does not exist');
+        }
+
+        const { expiresAt, otp: hashedOtp } = otpVerifyRecord;
+        if (expiresAt < Date.now()) {
+            await superAdminVerify.deleteMany({ superAdminId });
+            throw new Error('OTP code has expired');
+        }
+
+        const isValidOtp = await bcrypt.compare(otp, hashedOtp);
+        if (!isValidOtp) {
+            throw new Error('Invalid OTP code');
+        }
+
+        await SuperAdminModel.updateOne({ _id: superAdminId }, { isVerified: true });
+        await superAdminVerify.deleteMany({ superAdminId });
+
+        res.status(200).json({ message: 'SuperAdmin email verified successfully' });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+const resendVerificationOtp = async (req, res) => {  // Corrected function name and arguments order
+    try {
+        const { superAdminId, email } = req.body;
+        if (!superAdminId || !email) {
+            throw new Error('Empty superadmin details');
+        }
+
+        await superAdminVerify.deleteMany({ superAdminId });
+        await sendEmailVerification({ _id: superAdminId, email }, res);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
 
 // Login a superAdmin
 const loginSuperAdmin = async (req, res) => {
@@ -81,6 +192,11 @@ const loginSuperAdmin = async (req, res) => {
     // Compare the password with the hashed password
     const isMatch = await bcrypt.compare(password, superAdmin.password);
     if (!isMatch) return res.status(400).json("Invalid email or password");
+
+     // Ensure the supersdmin is verified before allowing login
+     if (!superAdmin.isVerified) {
+        return res.status(400).json({ message: 'Email not verified. Please check your email for the verification OTP.' });
+    }
 
     // Create a JWT token
     const token = jwt.sign({ id: superAdmin._id }, process.env.JWT_SECRET, {
@@ -624,5 +740,7 @@ module.exports = {
     viewAllOrders,
     updatePaymentStatus, 
     updateDeliveryStatus,
-    searchEngine
+    searchEngine,
+    verifyOtp,
+    resendVerificationOtp
  };
