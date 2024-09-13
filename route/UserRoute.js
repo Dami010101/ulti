@@ -37,7 +37,6 @@ router.put('/resetpassword', resetPassword)
 
 
 //email verification
-//email verification
 router.post('/verifyotp',verifyOtp)
 router.post('/resendverifyotp',resendVerificationOtp)
 

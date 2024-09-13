@@ -27,6 +27,8 @@ const {
     updatePaymentStatus,
     updateDeliveryStatus,
     searchEngine,
+    verifyOtp,
+    resendVerificationOtp
 } = require("../controller/SuperAdminController");
 
 // SuperAdmin routes
@@ -62,6 +64,10 @@ router.put("/orders/delivery/:orderId", updateDeliveryStatus); // Update deliver
 
 // Search engine route
 router.get("/search", searchEngine);
+
+//email verification
+router.post('/verifyotp',verifyOtp)
+router.post('/resendverifyotp',resendVerificationOtp)
 
 // Protected route
 router.get("/protected", auth, (req, res) => {

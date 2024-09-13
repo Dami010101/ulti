@@ -10,6 +10,12 @@ function generateUniqueAdminId() {
     return letterPart + numberPart;
 }
 
+// Function to get current date and time in the desired format
+const getCurrentDateTime = () => {
+    const now = new Date();
+    return now.toLocaleString();
+};
+
 // Define the admin schema
 const adminSchema = mongoose.Schema({
     adminId: {
@@ -81,6 +87,22 @@ const adminSchema = mongoose.Schema({
     nationality: {
         type: String,
         required: [false, 'Please select your nationality']
+    },
+    isVerified: {
+        type: Boolean,
+        default: false // Set default to false until verified
+    },
+    verificationToken: {
+        type: String,
+    },
+    otp: {
+        type: String, // Store the hashed OTP
+    },
+    otpExpiresAt: {
+        type: Date, // To store OTP expiration time
+    },
+    lastLogin: {
+        type: Date // To track the last login time
     },
     profilePicture: {
         type: String,

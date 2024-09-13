@@ -21,7 +21,9 @@ const {
     viewAllOrders, 
     updatePaymentStatus, 
     updateDeliveryStatus,
-    searchEngine,
+    searchEngine, 
+    verifyOtp,
+    resendVerificationOtp
     // upload // Import upload middleware
 } = require("../controller/AdminController");
 
@@ -51,6 +53,10 @@ router.put("/orders/delivery/:orderId", updateDeliveryStatus); // Update deliver
 
 //search engine route
 router.get("/search", searchEngine);
+
+//email verification
+router.post('/verifyotp',verifyOtp)
+router.post('/resendverifyotp',resendVerificationOtp)
 
 // Protected route
 router.get("/protected", auth, (req, res) => {
