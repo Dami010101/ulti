@@ -2,9 +2,11 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
+
 const { registerUser, loginUser, updateUser, viewAllUser, placeOrder, changePassword, 
     resetPassword, forgotPassword, verifyOtp,resendVerificationOtp } = require("../controller/UserController");
-const auth = require("../middleware/AuthMiddleware");
+// const auth = require("../middleware/AuthMiddleware");
+const auth = require('../middleware/authMiddleware')
 
 
 // Set up Multer for file uploads
@@ -29,9 +31,10 @@ router.post("/order", placeOrder);
 // router.post("/order", auth, placeOrder);
 
 //password manager
-router.patch('/changepassword', changePassword);
-router.post('/forgotpassword', forgotPassword)
-router.put('/resetpassword/:resetToken', resetPassword)
+router.put('/changepassword', auth ,changePassword);
+router.put('/forgotpassword', forgotPassword)
+router.put('/resetpassword', resetPassword)
+
 
 //email verification
 //email verification
@@ -42,5 +45,6 @@ router.post('/resendverifyotp',resendVerificationOtp)
 router.get("/protected", auth, (req, res) => {
     res.send("This is a protected route");
 });
+
 
 module.exports = router;
