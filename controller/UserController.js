@@ -353,12 +353,12 @@ const changePassword = async (req, res, next) => {
             res.status(400);
             return res.json({ message: 'Please add both old and new password' });
         }
-
+        
         // Check if old password matches password in DB
         const passwordIsCorrect = await bcrypt.compare(oldPassword, user.password);
-        console.log(user)
-        console.log('Token:', token);
-        console.log('Decoded JWT:', decoded);
+        // console.log(user)
+        // console.log('Token:', token);
+        // console.log('Decoded JWT:', decoded);
 
         // Save new password 
         if (passwordIsCorrect) {
@@ -375,60 +375,7 @@ const changePassword = async (req, res, next) => {
 };
 
 
-// Forgot password
-// const forgotPassword = async (req, res) => {
-//     const { email } = req.body;
-//     const user = await UserModel.findOne({ email });
-//     if (!user) {
-//         res.status(404);
-//         throw new Error('User does not exist');
-//     }
 
-//     // Delete token if token exists
-//     let token = await Token.findOne({ userId: user._id });
-//     if (token) {
-//         await token.deleteOne();
-//     }
-
-//     // Create reset token
-//     let resetToken = crypto.randomBytes(32).toString('hex') + user._id;
-
-//     // Hash token before saving to DB
-//     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-
-//     // Save token to DB
-//     await new Token({
-//         userId: user._id,
-//         token: hashedToken,
-//         createdAt: Date.now(),
-//         expiresAt: Date.now() + 30 * (60 * 1000) // 30 minutes
-//     }).save();
-
-//     // Construct reset URL
-//     const resetURL = `${process.env.CLIENT_URL}/resetpassword/${resetToken}`;
-
-//     // Construct reset email
-//     const message = `
-//         <h2>Hello ${user.name}</h2>
-//         <p>Please use the URL below to reset your password</p>
-//         <p>The reset link is only valid for 30 minutes</p>
-//         <a href=${resetURL} clicktracking=off>${resetURL}</a>
-//         <p>Regards,</p>
-//         <p>Your Company</p>
-//     `;
-
-//     const subject = "Password Reset Request";
-//     const send_to = user.email;
-//     const sent_from = process.env.EMAIL_USER;
-
-//     try {
-//         await sendMail(subject, message, send_to, sent_from);
-//         res.status(200).json({ success: true, message: "Reset Email Sent" });
-//     } catch (error) {
-//         res.status(500);
-//         throw new Error("Email not sent, please try again later");
-//     }
-// };
 
 
 const forgotPassword = async (req, res) => {
@@ -502,40 +449,5 @@ const resetPassword = async (req, res) => {
 
 
 
-// new code now 
-
-
-
-// const resetPassword = async(req,res) =>{
-
-// }
-
-// Reset password
-// const resetPassword = async (req, res, next) => {
-//     const { password } = req.body;
-//     const { resetToken } = req.params;
-
-//     // Hash token, then compare to Token in DB
-//     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-
-//     // Find token in DB
-//     const userToken = await Token.findOne({
-//         token: hashedToken,
-//         expiresAt: { $gt: Date.now() },
-//     });
-
-//     if (!userToken) {
-//         res.status(404);
-//         throw new Error("Invalid or Expired Token");
-//     }
-
-//     // Find user
-//     const user = await UserModel.findOne({ _id: userToken.userId });
-//     user.password = await bcrypt.hash(password, 10);
-//     await user.save();
-//     res.status(200).json({
-//         message: "Password Reset Successful, Please Login",
-//     });
-// };
 
 module.exports = { registerUser, loginUser, updateUser, viewAllUser, placeOrder, changePassword, forgotPassword, resetPassword, verifyOtp,resendVerificationOtp};
