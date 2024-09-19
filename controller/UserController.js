@@ -356,10 +356,9 @@ const changePassword = async (req, res, next) => {
         
         // Check if old password matches password in DB
         const passwordIsCorrect = await bcrypt.compare(oldPassword, user.password);
-        // console.log(user)
-        // console.log('Token:', token);
-        // console.log('Decoded JWT:', decoded);
-
+        console.log(user)
+        console.log('Token:', token);
+        console.log('Decoded JWT:', decoded);
         // Save new password 
         if (passwordIsCorrect) {
             user.password = await bcrypt.hash(password, 10);
@@ -422,7 +421,6 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
     const { token, password } = req.body;
-
     try {
         // Verify the token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
